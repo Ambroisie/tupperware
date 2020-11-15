@@ -26,6 +26,15 @@ struct list {
         (Cur); \
         (Cur) = ((Cur)->next == (List).head ? NULL : (Cur)->next))
 
+#define LIST_FOREACH_ENTRY(Type, Field, List, Cur) \
+    for (Type *Cur = (List).head == NULL \
+            ? NULL \
+            : CONTAINER_OF(Type, Field, (List).head); \
+        (Cur); \
+        (Cur) = ((Cur)->Field.next == (List).head \
+                ? NULL \
+                : CONTAINER_OF(Type, Field, (Cur)->Field.next)))
+
 typedef int (*list_cmp_f)(const struct list_node *lhs,
         const struct list_node *rhs, void *cookie);
 
