@@ -1,5 +1,5 @@
-#ifndef LIST_H
-#define LIST_H
+#ifndef TUPPERWARE_LIST_H
+#define TUPPERWARE_LIST_H
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -74,4 +74,4 @@ void list_map(struct list *list, list_map_f map, void *cookie);
 void list_filter(struct list *res,
         struct list *list, list_filter_f filter, void *cookie);
 
-#endif /* !LIST_H */
+#endif /* !TUPPERWARE_LIST_H */
