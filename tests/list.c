@@ -538,13 +538,11 @@ Test(list, filter) {
     cr_assert_eq(count, ARR_SIZE(arr));
 
     size_t count_even = 0;
-    LIST_FOREACH_CONST(res, it) {
-        struct int_list *n = CONTAINER_OF(struct int_list, list, it);
+    LIST_FOREACH_ENTRY(const struct int_list, list, res, n) {
         cr_assert_eq(n->val, ++count_even * 2);
     }
     size_t count_odd = 0;
-    LIST_FOREACH_CONST(l, it) {
-        struct int_list *n = CONTAINER_OF(struct int_list, list, it);
+    LIST_FOREACH_ENTRY(const struct int_list, list, l, n) {
         cr_assert_eq(n->val, ++count_odd * 2 - 1);
     }
     cr_assert_eq(count_even + count_odd, ARR_SIZE(arr));
