@@ -35,6 +35,12 @@ struct list {
                 ? NULL \
                 : CONTAINER_OF(Type, Field, (Cur)->Field.next)))
 
+#define LIST_NODE_INIT_VAL \
+    ((struct list_node){ \
+        .next = NULL, \
+        .prev = NULL, \
+    })
+
 typedef int (*list_cmp_f)(const struct list_node *lhs,
         const struct list_node *rhs, void *cookie);
 
