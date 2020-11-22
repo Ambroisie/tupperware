@@ -64,6 +64,7 @@ struct list_node *list_node_safe_detach(struct list_node **at);
 struct list_node *list_pop_front(struct list *list);
 struct list_node *list_pop_back(struct list *list);
 
+bool list_empty(const struct list *list);
 size_t list_length(const struct list *list);
 
 void list_node_concat(struct list_node *begin, struct list_node *end);

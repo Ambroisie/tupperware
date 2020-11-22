@@ -108,6 +108,12 @@ struct list_node *list_pop_back(struct list *list) {
     return list_pop_front(list);
 }
 
+bool list_empty(const struct list *list) {
+    if (!list)
+        return true;
+    return list->head == NULL;
+}
+
 size_t list_length(const struct list *list) {
     if (!list || !list->head)
         return 0;
