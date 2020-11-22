@@ -265,6 +265,20 @@ Test(list, pop_back) {
     assert_list(arr, ARR_SIZE(arr) - 1, 0);
 }
 
+Test(list, empty_null) {
+    cr_assert(list_empty(NULL));
+}
+
+Test(list, empty_none) {
+    cr_assert(list_empty(&(struct list){ NULL }));
+}
+
+Test(list, empty_one) {
+    struct int_list l = { 0, { &l.list, &l.list } };
+
+    cr_assert_not(list_empty(&(struct list){ &l.list }));
+}
+
 Test(list, length_null) {
     cr_assert_eq(list_length(NULL), 0);
 }
