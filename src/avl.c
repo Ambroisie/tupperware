@@ -416,3 +416,54 @@ size_t avl_height(const struct avl *tree) {
 
     return avl_height_helper(tree->root);
 }
+
+void avl_merge(struct avl *tree, struct avl *more) {
+    if (!tree || !more)
+        return;
+
+    struct avl tmp = {
+        more->cmp,
+        more->cookie,
+        NULL,
+    };
+
+    while (more->root) {
+        struct avl_node *v = more->root;
+        avl_remove_at(more, more->root); // Won't fail
+        if ((!avl_insert(tree, v, NULL))) // Keep old value
+            avl_insert_multi(&tmp, v); // Be conservative when reinserting
+    }
+
+    more->root = tmp.root;
+}
+
+void avl_update(struct avl *tree, struct avl *more) {
+    if (!tree || !more)
+        return;
+
+    struct avl tmp = {
+        more->cmp,
+        more->cookie,
+        NULL,
+    };
+
+    while (more->root) {
+        struct avl_node *v = more->root;
+        avl_remove_at(more, more->root); // Won't fail
+        if ((v = avl_insert_or_update(tree, v))) // Keep new value
+            avl_insert_multi(&tmp, v); // Be conservative when reinserting
+    }
+
+    more->root = tmp.root;
+}
+
+void avl_merge_all(struct avl *tree, struct avl *more) {
+    if (!tree || !more)
+        return;
+
+    while (more->root) {
+        struct avl_node *v = more->root;
+        avl_remove_at(more, more->root); // Won't fail
+        avl_insert_multi(tree, v); // Keep all values
+    }
+}
