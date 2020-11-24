@@ -4,6 +4,7 @@ CPPFLAGS = -Iinclude/ -Itests/
 VPATH = src/ tests/
 
 SRC = \
+    src/avl.c \
     src/list.c \
 
 OBJS = $(SRC:.c=.o)
