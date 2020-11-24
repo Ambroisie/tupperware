@@ -573,3 +573,262 @@ Test(avl, height_right) {
 
     cr_assert_eq(avl_height(&tree), 2);
 }
+
+Test(avl, merge_null) {
+    avl_merge(NULL, NULL);
+
+    size_t count = 0;
+    struct avl tree = init_avl(NULL, &count);
+    avl_merge(&tree, NULL);
+    avl_merge(NULL, &tree);
+
+    cr_assert_eq(count, 0);
+}
+
+Test(avl, merge_none_right) {
+    size_t count = 0;
+    struct int_tree t = { 42, AVL_NODE_INIT_VAL };
+    struct avl left = init_avl(&t.avl, &count);
+    struct avl right = init_avl(NULL, &count);
+
+    avl_merge(&left, &right);
+
+    cr_assert_eq(count, 0);
+    cr_assert_eq(left.root, &t.avl);
+    cr_assert_null(right.root);
+}
+
+Test(avl, merge_none_left) {
+    size_t count = 0;
+    struct int_tree t = { 42, AVL_NODE_INIT_VAL };
+    struct avl left = init_avl(NULL, &count);
+    struct avl right = init_avl(&t.avl, &count);
+
+    avl_merge(&left, &right);
+
+    cr_assert_eq(count, 0);
+    cr_assert_eq(left.root, &t.avl);
+    cr_assert_null(right.root);
+}
+
+Test(avl, merge_one) {
+    size_t count = 0;
+    struct int_tree t = { 42, AVL_NODE_INIT_VAL };
+    struct avl left = init_avl(&t.avl, &count);
+    struct int_tree t2 = { 43, AVL_NODE_INIT_VAL };
+    struct avl right = init_avl(&t2.avl, &count);
+
+    avl_merge(&left, &right);
+
+    cr_assert_eq(count, 1);
+    cr_assert_eq(left.root, &t.avl);
+    cr_assert_eq(left.root->right, &t2.avl);
+    cr_assert_null(left.root->left);
+    cr_assert_null(right.root);
+}
+
+Test(avl, merge_one_same) {
+    size_t count = 0;
+    struct int_tree t = { 42, AVL_NODE_INIT_VAL };
+    struct avl left = init_avl(&t.avl, &count);
+    struct int_tree t2 = { 42, AVL_NODE_INIT_VAL };
+    struct avl right = init_avl(&t2.avl, &count);
+
+    avl_merge(&left, &right);
+
+    cr_assert_eq(count, 1);
+    cr_assert_eq(left.root, &t.avl);
+    cr_assert_null(left.root->left);
+    cr_assert_null(left.root->right);
+    cr_assert_eq(right.root, &t2.avl);
+}
+
+static void assert_all_between(const struct avl_node *n,
+        const struct int_tree *b, const struct int_tree *e) {
+    if (!n)
+        return;
+
+    const struct int_tree *v = CONTAINER_OF(const struct int_tree, avl, n);
+    cr_assert_geq(v, b);
+    cr_assert_lt(v, e);
+
+    assert_all_between(n->left, b, e);
+    assert_all_between(n->right, b, e);
+}
+
+Test(avl, merge_same) {
+    struct int_tree arr1[5];
+    struct int_tree arr2[ARR_SIZE(arr1)];
+    size_t count = 0;
+    struct avl left = init_int_tree_avl(&count, arr1, ARR_SIZE(arr1));
+    struct avl right = init_int_tree_avl(&count, arr2, ARR_SIZE(arr2));
+
+    avl_merge(&left, &right);
+
+    assert_all_between(left.root, arr1, arr1 + ARR_SIZE(arr1));
+    assert_all_between(right.root, arr2, arr2 + ARR_SIZE(arr2));
+}
+
+Test(avl, update_null) {
+    avl_update(NULL, NULL);
+
+    size_t count = 0;
+    struct avl tree = init_avl(NULL, &count);
+    avl_update(&tree, NULL);
+    avl_update(NULL, &tree);
+
+    cr_assert_eq(count, 0);
+}
+
+Test(avl, update_none_right) {
+    size_t count = 0;
+    struct int_tree t = { 42, AVL_NODE_INIT_VAL };
+    struct avl left = init_avl(&t.avl, &count);
+    struct avl right = init_avl(NULL, &count);
+
+    avl_update(&left, &right);
+
+    cr_assert_eq(count, 0);
+    cr_assert_eq(left.root, &t.avl);
+    cr_assert_null(right.root);
+}
+
+Test(avl, update_none_left) {
+    size_t count = 0;
+    struct int_tree t = { 42, AVL_NODE_INIT_VAL };
+    struct avl left = init_avl(NULL, &count);
+    struct avl right = init_avl(&t.avl, &count);
+
+    avl_update(&left, &right);
+
+    cr_assert_eq(count, 0);
+    cr_assert_eq(left.root, &t.avl);
+    cr_assert_null(right.root);
+}
+
+Test(avl, update_one) {
+    size_t count = 0;
+    struct int_tree t = { 42, AVL_NODE_INIT_VAL };
+    struct avl left = init_avl(&t.avl, &count);
+    struct int_tree t2 = { 43, AVL_NODE_INIT_VAL };
+    struct avl right = init_avl(&t2.avl, &count);
+
+    avl_update(&left, &right);
+
+    cr_assert_eq(count, 1);
+    cr_assert_eq(left.root, &t.avl);
+    cr_assert_eq(left.root->right, &t2.avl);
+    cr_assert_null(left.root->left);
+    cr_assert_null(right.root);
+}
+
+Test(avl, update_one_same) {
+    size_t count = 0;
+    struct int_tree t = { 42, AVL_NODE_INIT_VAL };
+    struct avl left = init_avl(&t.avl, &count);
+    struct int_tree t2 = { 42, AVL_NODE_INIT_VAL };
+    struct avl right = init_avl(&t2.avl, &count);
+
+    avl_update(&left, &right);
+
+    cr_assert_eq(count, 1);
+    cr_assert_eq(left.root, &t2.avl);
+    cr_assert_null(left.root->left);
+    cr_assert_null(left.root->right);
+    cr_assert_eq(right.root, &t.avl);
+}
+
+Test(avl, update_same) {
+    struct int_tree arr1[5];
+    struct int_tree arr2[ARR_SIZE(arr1)];
+    size_t count = 0;
+    struct avl left = init_int_tree_avl(&count, arr1, ARR_SIZE(arr1));
+    struct avl right = init_int_tree_avl(&count, arr2, ARR_SIZE(arr2));
+
+    avl_update(&left, &right);
+
+    assert_all_between(left.root, arr2, arr2 + ARR_SIZE(arr2));
+    assert_all_between(right.root, arr1, arr1 + ARR_SIZE(arr1));
+}
+
+Test(avl, merge_all_null) {
+    avl_merge_all(NULL, NULL);
+
+    size_t count = 0;
+    struct avl tree = init_avl(NULL, &count);
+    avl_merge_all(&tree, NULL);
+    avl_merge_all(NULL, &tree);
+
+    cr_assert_eq(count, 0);
+}
+
+Test(avl, merge_all_none_right) {
+    size_t count = 0;
+    struct int_tree t = { 42, AVL_NODE_INIT_VAL };
+    struct avl left = init_avl(&t.avl, &count);
+    struct avl right = init_avl(NULL, &count);
+
+    avl_merge_all(&left, &right);
+
+    cr_assert_eq(count, 0);
+    cr_assert_eq(left.root, &t.avl);
+    cr_assert_null(right.root);
+}
+
+Test(avl, merge_all_none_left) {
+    size_t count = 0;
+    struct int_tree t = { 42, AVL_NODE_INIT_VAL };
+    struct avl left = init_avl(NULL, &count);
+    struct avl right = init_avl(&t.avl, &count);
+
+    avl_merge_all(&left, &right);
+
+    cr_assert_eq(count, 0);
+    cr_assert_eq(left.root, &t.avl);
+    cr_assert_null(right.root);
+}
+
+Test(avl, merge_all_one) {
+    size_t count = 0;
+    struct int_tree t = { 42, AVL_NODE_INIT_VAL };
+    struct avl left = init_avl(&t.avl, &count);
+    struct int_tree t2 = { 43, AVL_NODE_INIT_VAL };
+    struct avl right = init_avl(&t2.avl, &count);
+
+    avl_merge_all(&left, &right);
+
+    cr_assert_eq(count, 1);
+    cr_assert_eq(left.root, &t.avl);
+    cr_assert_eq(left.root->right, &t2.avl);
+    cr_assert_null(left.root->left);
+    cr_assert_null(right.root);
+}
+
+Test(avl, merge_all_one_same) {
+    size_t count = 0;
+    struct int_tree t = { 42, AVL_NODE_INIT_VAL };
+    struct avl left = init_avl(&t.avl, &count);
+    struct int_tree t2 = { 42, AVL_NODE_INIT_VAL };
+    struct avl right = init_avl(&t2.avl, &count);
+
+    avl_merge_all(&left, &right);
+
+    cr_assert_eq(count, 1);
+    cr_assert_eq(left.root, &t.avl);
+    cr_assert_eq(left.root->right, &t2.avl);
+    cr_assert_null(left.root->left);
+    cr_assert_null(right.root);
+}
+
+Test(avl, merge_all_same) {
+    struct int_tree arr1[5];
+    struct int_tree arr2[ARR_SIZE(arr1)];
+    size_t count = 0;
+    struct avl left = init_int_tree_avl(&count, arr1, ARR_SIZE(arr1));
+    struct avl right = init_int_tree_avl(&count, arr2, ARR_SIZE(arr2));
+
+    avl_merge_all(&left, &right);
+
+    // NOTE: does not check that all values are inside the merged tree
+    cr_assert_null(right.root);
+}
