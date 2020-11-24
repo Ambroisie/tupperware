@@ -60,5 +60,7 @@ void avl_merge_all(struct avl *tree, struct avl *more);
 void avl_prefix_map(struct avl *tree, avl_map_f map, void *cookie);
 void avl_infix_map(struct avl *tree, avl_map_f map, void *cookie);
 void avl_postfix_map(struct avl *tree, avl_map_f map, void *cookie);
+void avl_map_between(const struct avl *tree,
+        struct avl_node *inter[2], avl_map_f map, void *cookie);
 
 #endif /* !TUPPERWARE_AVL_H */

@@ -522,3 +522,65 @@ struct between_parameters {
     avl_map_f map;
     void *cookie;
 };
+
+static bool map_between_helper(struct avl_node *cur,
+    const struct avl_node *end, avl_map_f map, void *cookie) {
+    if (!cur)
+        return false;
+    if (cur == end)
+        return true;
+    if (map_between_helper(cur->left, end, map, cookie))
+        return true;
+    map(cur, cookie);
+    return map_between_helper(cur->right, end, map, cookie);
+}
+
+static bool map_between_right(struct avl_node *cur,
+    const struct avl_node *end, avl_map_f map, void *cookie) {
+    if (!cur)
+        return false;
+    if (cur == end)
+        return true;
+    map(cur, cookie);
+    return map_between_helper(cur->right, end, map, cookie);
+}
+
+static struct avl_node *find_parent(const struct avl *tree,
+        struct avl_node *cur, const struct avl_node *v) {
+    struct avl_node *parent = NULL;
+
+    int c = 0;
+    while (cur && (c = tree->cmp(v, cur, tree->cookie))) {
+        parent = cur;
+        if (c < 0)
+            cur = cur->left;
+        else
+            cur = cur->right;
+    }
+
+    if (!cur)
+        return NULL;
+    if (cur == v)
+        return parent;
+    if (cur->left == v || cur->right == v)
+        return cur; // NOTE: needs better handling
+    if ((parent = find_parent(tree, cur->right, v)))
+        return parent;
+    if ((parent = find_parent(tree, cur->left, v)))
+        return parent;
+
+    return NULL;
+}
+
+void avl_map_between(const struct avl *tree,
+        struct avl_node *inter[2], avl_map_f map, void *cookie) {
+    if (!tree || !tree->root)
+        return;
+
+    struct avl_node *begin = inter[0];
+    const struct avl_node *end = inter[1];
+    // FIXME: finding the parent is inefficient
+    while (begin && !map_between_right(begin, end, map, cookie)) {
+        begin = find_parent(tree, tree->root, begin);
+    }
+}
