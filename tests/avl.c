@@ -832,3 +832,133 @@ Test(avl, merge_all_same) {
     // NOTE: does not check that all values are inside the merged tree
     cr_assert_null(right.root);
 }
+
+static void int_tree_mapper(struct avl_node *n, void *cookie) {
+    int *count = cookie;
+    struct int_tree *t = CONTAINER_OF(struct int_tree, avl, n);
+
+    cr_assert_eq(t->val, (*count)++);
+}
+
+Test(avl, prefix_map_null) {
+    int count = 0;
+
+    avl_prefix_map(NULL, int_tree_mapper, &count);
+
+    cr_assert_eq(count, 0);
+}
+
+Test(avl, prefix_map_none) {
+    int count = 0;
+
+    struct avl tree = init_avl(NULL, NULL);
+    avl_prefix_map(&tree, int_tree_mapper, &count);
+
+    cr_assert_eq(count, 0);
+}
+
+Test(avl, prefix_map_one) {
+    int count = 0;
+
+    struct int_tree t = { 0, AVL_NODE_INIT_VAL };
+    struct avl tree = init_avl(&t.avl, NULL);
+    avl_prefix_map(&tree, int_tree_mapper, &count);
+
+    cr_assert_eq(count, 1);
+}
+
+Test(avl, prefix_map) {
+    int count = 0;
+
+    struct int_tree t3 = { 2, AVL_NODE_INIT_VAL };
+    struct int_tree t2 = { 1, AVL_NODE_INIT_VAL };
+    struct int_tree t = { 0, AVL_NODE_INIT_VAL };
+    t.avl.left = &t2.avl;
+    t.avl.right = &t3.avl;
+    struct avl tree = init_avl(&t.avl, NULL);
+    avl_prefix_map(&tree, int_tree_mapper, &count);
+
+    cr_assert_eq(count, 3);
+}
+
+Test(avl, infix_map_null) {
+    int count = 0;
+
+    avl_infix_map(NULL, int_tree_mapper, &count);
+
+    cr_assert_eq(count, 0);
+}
+
+Test(avl, infix_map_none) {
+    int count = 0;
+
+    struct avl tree = init_avl(NULL, NULL);
+    avl_infix_map(&tree, int_tree_mapper, &count);
+
+    cr_assert_eq(count, 0);
+}
+
+Test(avl, infix_map_one) {
+    int count = 0;
+
+    struct int_tree t = { 0, AVL_NODE_INIT_VAL };
+    struct avl tree = init_avl(&t.avl, NULL);
+    avl_infix_map(&tree, int_tree_mapper, &count);
+
+    cr_assert_eq(count, 1);
+}
+
+Test(avl, infix_map) {
+    int count = 0;
+
+    struct int_tree t3 = { 2, AVL_NODE_INIT_VAL };
+    struct int_tree t1 = { 0, AVL_NODE_INIT_VAL };
+    struct int_tree t = { 1, AVL_NODE_INIT_VAL };
+    t.avl.left = &t1.avl;
+    t.avl.right = &t3.avl;
+    struct avl tree = init_avl(&t.avl, NULL);
+    avl_infix_map(&tree, int_tree_mapper, &count);
+
+    cr_assert_eq(count, 3);
+}
+
+Test(avl, postfix_map_null) {
+    int count = 0;
+
+    avl_postfix_map(NULL, int_tree_mapper, &count);
+
+    cr_assert_eq(count, 0);
+}
+
+Test(avl, postfix_map_none) {
+    int count = 0;
+
+    struct avl tree = init_avl(NULL, NULL);
+    avl_postfix_map(&tree, int_tree_mapper, &count);
+
+    cr_assert_eq(count, 0);
+}
+
+Test(avl, postfix_map_one) {
+    int count = 0;
+
+    struct int_tree t = { 0, AVL_NODE_INIT_VAL };
+    struct avl tree = init_avl(&t.avl, NULL);
+    avl_postfix_map(&tree, int_tree_mapper, &count);
+
+    cr_assert_eq(count, 1);
+}
+
+Test(avl, postfix_map) {
+    int count = 0;
+
+    struct int_tree t2 = { 1, AVL_NODE_INIT_VAL };
+    struct int_tree t1 = { 0, AVL_NODE_INIT_VAL };
+    struct int_tree t = { 2, AVL_NODE_INIT_VAL };
+    t.avl.left = &t1.avl;
+    t.avl.right = &t2.avl;
+    struct avl tree = init_avl(&t.avl, NULL);
+    avl_postfix_map(&tree, int_tree_mapper, &count);
+
+    cr_assert_eq(count, 3);
+}
