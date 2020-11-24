@@ -18,6 +18,7 @@ check: testsuite
 	./testsuite --verbose
 
 TEST_SRC = \
+    tests/avl.c \
     tests/list.c \
     tests/testsuite.c \
 
