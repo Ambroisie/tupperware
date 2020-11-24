@@ -962,3 +962,147 @@ Test(avl, postfix_map) {
 
     cr_assert_eq(count, 3);
 }
+
+Test(avl, map_between_null) {
+    int count = 0;
+
+    struct avl_node *inter[2] = { NULL, NULL };
+    avl_map_between(NULL, inter, int_tree_mapper, &count);
+
+    cr_assert_eq(count, 0);
+}
+
+Test(avl, map_between_none) {
+    int count = 0;
+
+    struct avl_node *inter[2] = { NULL, NULL };
+    struct avl tree = init_avl(NULL, NULL);
+    avl_map_between(&tree, inter, int_tree_mapper, &count);
+
+    cr_assert_eq(count, 0);
+}
+
+Test(avl, map_between_closed_interval) {
+    struct int_tree arr[5];
+    size_t cmp_count = 0;
+    struct avl tree = init_int_tree_avl(&cmp_count, arr, ARR_SIZE(arr));
+
+    struct avl_node *inter[2] = { &arr[0].avl, &arr[0].avl };
+    int count = 0;
+    avl_map_between(&tree, inter, int_tree_mapper, &count);
+
+    cr_assert_eq(count, 0);
+}
+
+Test(avl, map_between_one_interval) {
+    struct int_tree arr[5];
+    size_t cmp_count = 0;
+    struct avl tree = init_int_tree_avl(&cmp_count, arr, ARR_SIZE(arr));
+
+    struct avl_node *inter[2] = { &arr[0].avl, &arr[1].avl };
+    int count = 0;
+    avl_map_between(&tree, inter, int_tree_mapper, &count);
+
+    cr_assert_eq(count, 1);
+}
+
+Test(avl, map_between_open_interval) {
+    struct int_tree arr[5];
+    size_t cmp_count = 0;
+    struct avl tree = init_int_tree_avl(&cmp_count, arr, ARR_SIZE(arr));
+
+    struct avl_node *inter[2] = { &arr[0].avl, NULL };
+    int count = 0;
+    avl_map_between(&tree, inter, int_tree_mapper, &count);
+
+    cr_assert_eq(count, 5);
+}
+
+static void int_tree_mapper_same(struct avl_node *n, void *cookie) {
+    int *count = cookie;
+    struct int_tree *t = CONTAINER_OF(struct int_tree, avl, n);
+
+    cr_assert_eq(t->val, 0);
+    ++*count;
+}
+
+Test(avl, map_between_multi_values_root_single) {
+    struct int_tree t2 = { 0, AVL_NODE_INIT_VAL };
+    struct int_tree t1 = { 0, AVL_NODE_INIT_VAL };
+    struct int_tree t = { 0, AVL_NODE_INIT_VAL };
+    t.avl.left = &t1.avl;
+    t.avl.right = &t2.avl;
+    size_t cmp_count = 0;
+    struct avl tree = init_avl(&t.avl, &cmp_count);
+
+    struct avl_node *inter[2] = { &t.avl, &t2.avl };
+    int count = 0;
+    avl_map_between(&tree, inter, int_tree_mapper_same, &count);
+
+    cr_assert_eq(count, 1);
+}
+
+Test(avl, map_between_multi_values_root) {
+    struct int_tree t2 = { 0, AVL_NODE_INIT_VAL };
+    struct int_tree t1 = { 0, AVL_NODE_INIT_VAL };
+    struct int_tree t = { 0, AVL_NODE_INIT_VAL };
+    t.avl.left = &t1.avl;
+    t.avl.right = &t2.avl;
+    size_t cmp_count = 0;
+    struct avl tree = init_avl(&t.avl, &cmp_count);
+
+    struct avl_node *inter[2] = { &t.avl, NULL };
+    int count = 0;
+    avl_map_between(&tree, inter, int_tree_mapper_same, &count);
+
+    cr_assert_eq(count, 2);
+}
+
+Test(avl, map_between_multi_values_but_one) {
+    struct int_tree t2 = { 0, AVL_NODE_INIT_VAL };
+    struct int_tree t1 = { 0, AVL_NODE_INIT_VAL };
+    struct int_tree t = { 0, AVL_NODE_INIT_VAL };
+    t.avl.left = &t1.avl;
+    t.avl.right = &t2.avl;
+    size_t cmp_count = 0;
+    struct avl tree = init_avl(&t.avl, &cmp_count);
+
+    struct avl_node *inter[2] = { &t1.avl, &t2.avl };
+    int count = 0;
+    avl_map_between(&tree, inter, int_tree_mapper_same, &count);
+
+    cr_assert_eq(count, 2);
+}
+
+Test(avl, map_between_multi_values_all) {
+    struct int_tree t6 = { 0, AVL_NODE_INIT_VAL };
+    struct int_tree t5 = { 0, AVL_NODE_INIT_VAL };
+    struct int_tree t4 = { 0, AVL_NODE_INIT_VAL };
+    struct int_tree t3 = { 0, AVL_NODE_INIT_VAL };
+    struct int_tree t2 = { 0, AVL_NODE_INIT_VAL };
+    struct int_tree t1 = { 0, AVL_NODE_INIT_VAL };
+    struct int_tree t = { 0, AVL_NODE_INIT_VAL };
+
+    // t
+    //   t3
+    //     t1
+    //     t2
+    //   t6
+    //     t4
+    //     t5
+    t3.avl.left = &t1.avl;
+    t3.avl.right = &t2.avl;
+    t6.avl.left = &t4.avl;
+    t6.avl.right = &t5.avl;
+    t.avl.left = &t3.avl;
+    t.avl.right = &t6.avl;
+
+    size_t cmp_count = 0;
+    struct avl tree = init_avl(&t.avl, &cmp_count);
+
+    struct avl_node *inter[2] = { &t1.avl, NULL };
+    int count = 0;
+    avl_map_between(&tree, inter, int_tree_mapper_same, &count);
+
+    cr_assert_eq(count, 7);
+}
