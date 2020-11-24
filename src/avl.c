@@ -467,3 +467,58 @@ void avl_merge_all(struct avl *tree, struct avl *more) {
         avl_insert_multi(tree, v); // Keep all values
     }
 }
+
+static void avl_prefix_map_helper(struct avl_node *n,
+        avl_map_f map, void *cookie) {
+    if (!n)
+        return;
+
+    map(n, cookie);
+    avl_prefix_map_helper(n->left, map, cookie);
+    avl_prefix_map_helper(n->right, map, cookie);
+}
+
+void avl_prefix_map(struct avl *tree, avl_map_f map, void *cookie) {
+    if (!tree)
+        return;
+    avl_prefix_map_helper(tree->root, map, cookie);
+}
+
+
+static void avl_infix_map_helper(struct avl_node *n,
+        avl_map_f map, void *cookie) {
+    if (!n)
+        return;
+
+    avl_infix_map_helper(n->left, map, cookie);
+    map(n, cookie);
+    avl_infix_map_helper(n->right, map, cookie);
+}
+
+void avl_infix_map(struct avl *tree, avl_map_f map, void *cookie) {
+    if (!tree)
+        return;
+    avl_infix_map_helper(tree->root, map, cookie);
+}
+
+static void avl_postfix_map_helper(struct avl_node *n,
+        avl_map_f map, void *cookie) {
+    if (!n)
+        return;
+
+    avl_postfix_map_helper(n->left, map, cookie);
+    avl_postfix_map_helper(n->right, map, cookie);
+    map(n, cookie);
+}
+
+void avl_postfix_map(struct avl *tree, avl_map_f map, void *cookie) {
+    if (!tree)
+        return;
+    avl_postfix_map_helper(tree->root, map, cookie);
+}
+
+struct between_parameters {
+    struct avl_node *end;
+    avl_map_f map;
+    void *cookie;
+};
