@@ -16,12 +16,13 @@ all: $(OBJS)
 
 .PHONY: check
 check: testsuite
-	./testsuite --verbose
+	ASAN_OPTIONS=allocator_may_return_null=1 ./testsuite --verbose
 
 TEST_SRC = \
     tests/avl.c \
     tests/list.c \
     tests/testsuite.c \
+    tests/vector.c \
 
 TEST_OBJS = $(TEST_SRC:.c=.o)
 
