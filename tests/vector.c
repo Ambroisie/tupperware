@@ -420,3 +420,233 @@ Test(vector, pop_at) {
     cr_assert_not(vector_pop_at(&v, &res, 0));
     cr_assert_eq(v.nmemb, 0);
 }
+
+static int int_cmp(const void *lhs, const void *rhs, void *cookie) {
+    const int *l = lhs;
+    const int *r = rhs;
+    int *count = cookie;
+
+    ++*count;
+
+    if (*l < *r)
+        return -1;
+    return (*l > *r);
+}
+
+Test(vector, is_max_heap_null) {
+    int count = 0;
+
+    cr_assert(vector_is_max_heap(NULL, int_cmp, &count));
+
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, is_max_heap_empty) {
+    int count = 0;
+
+    cr_assert(vector_is_max_heap(&v, int_cmp, &count));
+
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, is_max_heap_one) {
+    int *arr = v.arr;
+    arr[v.nmemb++] = 42;
+    int count = 0;
+
+    cr_assert(vector_is_max_heap(&v, int_cmp, &count));
+
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, is_max_heap_sorted) {
+    int count = 0;
+    fill_v();
+
+    cr_assert_not(vector_is_max_heap(&v, int_cmp, &count));
+
+    cr_assert_gt(count, 0);
+    // A complete tree has (N - 1) internal connections
+    cr_assert_leq(count, init_n - 1);
+}
+
+Test(vector, is_max_heap_inverse_sorted) {
+    for (size_t i = 0; i < init_n; ++i) {
+        int *arr = v.arr;
+        arr[v.nmemb++] = init_n - i - 1;
+    }
+    int count = 0;
+
+    cr_assert(vector_is_max_heap(&v, int_cmp, &count));
+
+    // A complete tree has (N - 1) internal connections, we check all of them
+    cr_assert_eq(count, init_n - 1);
+}
+
+Test(vector, make_heap_null) {
+    int count = 0;
+
+    cr_assert_not(vector_make_heap(NULL, int_cmp, &count));
+
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, make_heap_empty) {
+    int count = 0;
+
+    cr_assert_not(vector_make_heap(&v, int_cmp, &count));
+
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, make_heap_one) {
+    int *arr = v.arr;
+    arr[v.nmemb++] = 42;
+    int count = 0;
+
+    cr_assert(vector_make_heap(&v, int_cmp, &count));
+
+    cr_assert(vector_is_max_heap(&v, int_cmp, &count));
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, make_heap) {
+    fill_v();
+    int count = 0;
+
+    cr_assert(vector_make_heap(&v, int_cmp, &count));
+
+    cr_assert(vector_is_max_heap(&v, int_cmp, &count));
+    cr_assert_neq(count, 0);
+}
+
+static void fill_v_heap(void) {
+    int *arr = v.arr;
+    for (size_t i = 0; i < v.cap; ++i) {
+        arr[v.nmemb++] = init_n - i - 1;
+    }
+
+    int count = 0;
+    vector_make_heap(&v, int_cmp, &count);
+}
+
+Test(vector, push_heap_null) {
+    int count = 0;
+    cr_assert_not(vector_push_heap(NULL, NULL, int_cmp, &count));
+
+    int n = 42;
+    cr_assert_not(vector_push_heap(&v, NULL, int_cmp, &count));
+    cr_assert_not(vector_push_heap(NULL, &n, int_cmp, &count));
+
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, push_heap_empty) {
+    int n = 42;
+
+    int count = 0;
+    cr_assert(vector_push_heap(&v, &n, int_cmp, &count));
+
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, push_heap_full) {
+    fill_v_heap();
+    int n = 42;
+
+    int count = 0;
+    cr_assert(vector_push_heap(&v, &n, int_cmp, &count));
+
+    cr_assert_neq(count, 0);
+    cr_assert_eq(v.nmemb, init_n + 1);
+    cr_assert(vector_is_max_heap(&v, int_cmp, &count));
+}
+
+Test(vector, push_heap_sorted) {
+    int count = 0;
+
+    for (size_t i = 0; i < init_n; ++i) {
+        int n = i;
+        cr_assert(vector_push_heap(&v, &n, int_cmp, &count));
+        cr_assert(vector_is_max_heap(&v, int_cmp, &count));
+        cr_assert_eq(v.nmemb, i + 1);
+    }
+}
+
+Test(vector, push_heap_inverse_sorted) {
+    int count = 0;
+
+    for (size_t i = 0; i < init_n; ++i) {
+        int n = init_n - i - 1;
+        cr_assert(vector_push_heap(&v, &n, int_cmp, &count));
+        cr_assert(vector_is_max_heap(&v, int_cmp, &count));
+        cr_assert_eq(v.nmemb, i + 1);
+    }
+}
+
+Test(vector, push_heap_same) {
+    int count = 0;
+
+    for (size_t i = 0; i < init_n; ++i) { // Use underflow to stop
+        int n = 0;
+        cr_assert(vector_push_heap(&v, &n, int_cmp, &count));
+        cr_assert(vector_is_max_heap(&v, int_cmp, &count));
+        cr_assert_eq(v.nmemb, i + 1);
+    }
+}
+
+Test(vector, pop_heap_null) {
+    int count = 0;
+    cr_assert_not(vector_pop_heap(NULL, NULL, int_cmp, &count));
+
+    int n = 42;
+    cr_assert_not(vector_pop_heap(&v, NULL, int_cmp, &count));
+    cr_assert_not(vector_pop_heap(NULL, &n, int_cmp, &count));
+
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, pop_heap_empty) {
+    int n = 42;
+
+    int count = 0;
+    cr_assert_not(vector_pop_heap(&v, &n, int_cmp, &count));
+
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, pop_heap_one_null_output) {
+    int *arr = v.arr;
+    arr[v.nmemb++] = 42;
+    int count = 0;
+
+    cr_assert(vector_pop_heap(&v, NULL, int_cmp, &count));
+    cr_assert_eq(v.nmemb, 0);
+}
+
+Test(vector, pop_heap_full) {
+    fill_v_heap();
+    int n = 42;
+
+    int count = 0;
+    cr_assert(vector_pop_heap(&v, &n, int_cmp, &count));
+
+    cr_assert_neq(count, 0);
+    cr_assert_eq(n, init_n - 1);
+    cr_assert_eq(v.nmemb, init_n - 1);
+    cr_assert(vector_is_max_heap(&v, int_cmp, &count));
+}
+
+Test(vector, pop_heap) {
+    fill_v_heap();
+
+    int count = 0;
+    for (size_t i = 0; i < init_n; ++i) { // Use underflow to stop
+        int n = 42;
+        cr_assert(vector_pop_heap(&v, &n, int_cmp, &count));
+        cr_assert_eq(n, init_n - i - 1);
+        cr_assert(vector_is_max_heap(&v, int_cmp, &count));
+    }
+
+    cr_assert_eq(v.nmemb, 0);
+}
