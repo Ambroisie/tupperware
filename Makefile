@@ -1,11 +1,12 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -pedantic -std=c99 -Werror
-CPPFLAGS = -Iinclude/ -Itests/
+CPPFLAGS = -Iinclude/ -Itests/ -D_DEFAULT_SOURCE
 VPATH = src/ tests/
 
 SRC = \
     src/avl.c \
     src/list.c \
+    src/vector.c \
 
 OBJS = $(SRC:.c=.o)
 
