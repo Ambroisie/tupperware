@@ -146,3 +146,126 @@ bool vector_pop_at(struct vector *v, void *output, size_t i) {
 
     return true;
 }
+
+bool vector_is_max_heap_helper(struct vector *v,
+        size_t n, vector_cmp_f cmp, void *cookie) {
+    size_t l = n * 2 + 1;
+    size_t r = n * 2 + 2;
+
+    if (l < v->nmemb) {
+        if (cmp(VEC_AT(v, n), VEC_AT(v, l), cookie) < 0)
+            return false;
+        if (!vector_is_max_heap_helper(v, l, cmp, cookie))
+            return false;
+    }
+    if (r < v->nmemb) {
+        if (cmp(VEC_AT(v, n), VEC_AT(v, r), cookie) < 0)
+            return false;
+        if (!vector_is_max_heap_helper(v, r, cmp, cookie))
+            return false;
+    }
+
+    return true;
+}
+
+bool vector_is_max_heap(struct vector *v, vector_cmp_f cmp, void *cookie) {
+    if (!v || !v->nmemb)
+        return true;
+
+    return vector_is_max_heap_helper(v, 0, cmp, cookie);
+}
+
+static void swap_using(struct vector *v, size_t lhs, size_t rhs, void *buffer) {
+    memmove(buffer, VEC_AT(v, lhs), v->size);
+    memmove(VEC_AT(v, lhs), VEC_AT(v, rhs), v->size);
+    memmove(VEC_AT(v, rhs), buffer, v->size);
+}
+
+static void sift_down(struct vector *v,
+    size_t pos, vector_cmp_f cmp, void *cookie, void *buffer) {
+    size_t l = 2 * pos + 1;
+    size_t r = 2 * pos + 2;
+
+    size_t max = pos;
+
+    if (l < v->nmemb && cmp(VEC_AT(v, max), VEC_AT(v, l), cookie) < 0)
+        max = l;
+    if (r < v->nmemb && cmp(VEC_AT(v, max), VEC_AT(v, r), cookie) < 0)
+        max = r;
+    if (max != pos) {
+        swap_using(v, max, pos, buffer);
+        sift_down(v, max, cmp, cookie, buffer);
+    }
+}
+
+static void sift_up(struct vector *v,
+        size_t pos, vector_cmp_f cmp, void *cookie, void *buffer) {
+    if (!pos)
+        return;
+
+    size_t parent = (pos - 1) / 2;
+
+    if (cmp(VEC_AT(v, parent), VEC_AT(v, pos), cookie) < 0) {
+        swap_using(v, pos, parent, buffer);
+        sift_up(v, parent, cmp, cookie, buffer);
+    }
+}
+
+bool vector_make_heap(struct vector *v, vector_cmp_f cmp, void *cookie) {
+    if (!v || !v->nmemb)
+        return false;
+
+    void *buffer = malloc(v->size);
+    if (!buffer)
+        return false;
+
+    size_t i = v->nmemb / 2;
+    do
+    {
+        sift_down(v, i, cmp, cookie, buffer);
+    } while (i-- != 0);
+
+    free(buffer);
+
+    return true;
+}
+
+bool vector_push_heap(struct vector *v,
+        void *elem, vector_cmp_f cmp, void *cookie) {
+    if (!v || !elem)
+        return false;
+
+    void *buffer = malloc(v->size);
+    if (!buffer)
+        return false;
+
+    if (!vector_push_back(v, elem))
+        return false;
+
+    sift_up(v, v->nmemb - 1, cmp, cookie, buffer);
+
+    free(buffer);
+
+    return true;
+}
+
+bool vector_pop_heap(struct vector *v,
+        void *output, vector_cmp_f cmp, void *cookie) {
+    if (!v || !v->nmemb)
+        return false;
+
+    // The swap would take care of putting it at the end of the array
+    if (output && output != VEC_AT(v, v->nmemb - 1))
+        memmove(output, VEC_AT(v, 0), v->size);
+
+    if (v->nmemb == 1) {
+        v->nmemb -= 1;
+        return true;
+    }
+
+    swap_at_end(v, 0, v->nmemb - 1);
+    v->nmemb -= 1;
+    sift_down(v, 0, cmp, cookie);
+
+    return true;
+}

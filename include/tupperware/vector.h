@@ -31,4 +31,13 @@ bool vector_insert_at(struct vector *v, void *elem, size_t i);
 bool vector_pop_back(struct vector *v, void *output);
 bool vector_pop_at(struct vector *v, void *output, size_t i);
 
+typedef int (*vector_cmp_f)(const void *lhs, const void *rhs, void *cookie);
+
+bool vector_is_max_heap(struct vector *v, vector_cmp_f cmp, void *cookie);
+bool vector_make_heap(struct vector *v, vector_cmp_f cmp, void *cookie);
+bool vector_push_heap(struct vector *v,
+        void *elem, vector_cmp_f cmp, void *cookie);
+bool vector_pop_heap(struct vector *v,
+        void *output, vector_cmp_f cmp, void *cookie);
+
 #endif /* !TUPPERWARE_VECTOR_H */
