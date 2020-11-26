@@ -3,7 +3,7 @@
 #include "tupperware/vector.h"
 
 struct vector v;
-const size_t init_n = 10;
+const size_t init_n = 42;
 
 static void setup(void) {
 
