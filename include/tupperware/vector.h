@@ -40,4 +40,10 @@ bool vector_push_heap(struct vector *v,
 bool vector_pop_heap(struct vector *v,
         void *output, vector_cmp_f cmp, void *cookie);
 
+bool vector_is_sorted(const struct vector *v, vector_cmp_f cmp, void *cookie);
+bool vector_insert_sort(struct vector *v, vector_cmp_f cmp, void *cookie);
+bool vector_heap_sort(struct vector *v, vector_cmp_f cmp, void *cookie);
+bool vector_merge_sort(struct vector *v, vector_cmp_f cmp, void *cookie);
+bool vector_sort(struct vector *v, vector_cmp_f cmp, void *cookie);
+
 #endif /* !TUPPERWARE_VECTOR_H */

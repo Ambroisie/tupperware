@@ -263,9 +263,309 @@ bool vector_pop_heap(struct vector *v,
         return true;
     }
 
-    swap_at_end(v, 0, v->nmemb - 1);
+    void *buffer = malloc(v->size);
+    if (!buffer)
+        return false;
+
+    swap_using(v, 0, v->nmemb - 1, buffer);
     v->nmemb -= 1;
-    sift_down(v, 0, cmp, cookie);
+    sift_down(v, 0, cmp, cookie, buffer);
+
+    free(buffer);
+
+    return true;
+}
+
+bool vector_is_sorted(const struct vector *v, vector_cmp_f cmp, void *cookie) {
+    if (!v)
+        return true;
+
+    for (size_t i = 1; i < v->nmemb; ++i) {
+        if (cmp(VEC_AT(v, 0), VEC_AT(v, 1), cookie) > 0)
+            return false;
+    }
+
+    return true;
+}
+
+struct sort_params {
+    size_t begin;
+    size_t end;
+    void *buffer;
+};
+
+static void insert_sort_helper(struct vector *v,
+        vector_cmp_f cmp, void *cookie, const struct sort_params *params) {
+    size_t b = params->begin;
+    size_t e = params->end;
+
+    for (size_t i = 1; i < (e - b); ++i) {
+        memmove(params->buffer, VEC_AT(v, b + i), v->size);
+        size_t j = i;
+        for (; j && cmp(VEC_AT(v, b + j - 1), params->buffer, cookie) > 0; --j)
+            memmove(VEC_AT(v, b + j), VEC_AT(v, b + j - 1), v->size);
+        memmove(VEC_AT(v, b + j), params->buffer, v->size);
+    }
+}
+
+bool vector_insert_sort(struct vector *v, vector_cmp_f cmp, void *cookie) {
+    if (!v || !v->nmemb)
+        return true;
+    struct sort_params params = {
+        .begin = 0,
+        .end = v->nmemb,
+        .buffer = malloc(v->size),
+    };
+    if (!params.buffer)
+        return false;
+
+    insert_sort_helper(v, cmp, cookie, &params);
+
+    free(params.buffer);
+
+    return true;
+}
+
+static void sift_down_between(struct vector *v, size_t pos,
+        vector_cmp_f cmp, void *cookie, const struct sort_params *params) {
+    size_t b = params->begin;
+    size_t e = params->end;
+
+    size_t l = 2 * pos + 1;
+    size_t r = 2 * pos + 2;
+
+    size_t max = pos;
+
+    if (l < (e - b) && cmp(VEC_AT(v, b + max), VEC_AT(v, b + l), cookie) < 0)
+        max = l;
+    if (r < (e - b) && cmp(VEC_AT(v, b + max), VEC_AT(v, b + r), cookie) < 0)
+        max = r;
+    if (max != pos) {
+        swap_using(v, b + max, b + pos, params->buffer);
+        sift_down_between(v, max, cmp, cookie, params);
+    }
+}
+
+static void make_heap_between(struct vector *v,
+        vector_cmp_f cmp, void *cookie, const struct sort_params *params) {
+    size_t b = params->begin;
+    size_t e = params->end;
+    if ((e - b) <= 1)
+        return;
+    size_t i = (e - b) / 2;
+    do
+    {
+        sift_down_between(v, i, cmp, cookie, params);
+    } while (i-- != 0);
+}
+
+static void pop_heap_between(struct vector *v,
+        vector_cmp_f cmp, void *cookie, struct sort_params *params) {
+    params->end -= 1;
+
+    if (params->end - params->begin == 0)
+        return;
+
+    swap_using(v, params->begin, params->end, params->buffer);
+    sift_down_between(v, 0, cmp, cookie, params);
+}
+
+static void heap_sort_helper(struct vector *v,
+        vector_cmp_f cmp, void *cookie, struct sort_params *params) {
+    make_heap_between(v, cmp, cookie, params);
+
+    while (params->end - params->begin) {
+        pop_heap_between(v, cmp, cookie, params); // Modifies the end
+    }
+}
+
+bool vector_heap_sort(struct vector *v, vector_cmp_f cmp, void *cookie) {
+    if (!v || !v->nmemb)
+        return true;
+    struct sort_params params = {
+        .begin = 0,
+        .end = v->nmemb,
+        .buffer = malloc(v->size),
+    };
+    if (!params.buffer)
+        return false;
+
+    heap_sort_helper(v, cmp, cookie, &params);
+
+    free(params.buffer);
+
+    return true;
+}
+
+static void merge_to_buf(struct vector *v,
+        vector_cmp_f cmp, void *cookie, struct sort_params *params) {
+    size_t b = params->begin;
+    size_t e = params->end;
+    size_t mid = b + (e - b) / 2;
+
+    size_t i = b;
+    size_t j = mid;
+    for (size_t k = b; k < e; k++) {
+        if (i < mid
+            && (j >= e || cmp(VEC_AT(v, i), VEC_AT(v, j), cookie) <= 0)) {
+            memmove((char *)params->buffer + v->size * k, VEC_AT(v, i), v->size);
+            i = i + 1;
+        } else {
+            memmove((char *)params->buffer + v->size * k, VEC_AT(v, j), v->size);
+            j = j + 1;
+        }
+    }
+}
+
+static void merge_sort_helper(struct vector *v,
+        vector_cmp_f cmp, void *cookie, struct sort_params *params) {
+    if (params->end - params->begin <= 1)
+        return;
+    size_t b = params->begin;
+    size_t e = params->end;
+    size_t mid = b + (e - b) / 2;
+    void *buf = params->buffer;
+    void *arr = v->arr;
+
+    v->arr = buf;
+    params->buffer = arr;
+
+    params->begin = mid;
+    params->end = e;
+    merge_sort_helper(v, cmp, cookie, params);
+    params->begin = b;
+    params->end = mid;
+    merge_sort_helper(v, cmp, cookie, params);
+
+    params->begin = b;
+    params->end = e;
+    merge_to_buf(v, cmp, cookie, params);
+
+    v->arr = arr;
+    params->buffer = buf;
+}
+
+bool vector_merge_sort(struct vector *v, vector_cmp_f cmp, void *cookie) {
+    if (!v || !v->nmemb)
+        return true;
+    struct sort_params params = {
+        .begin = 0,
+        .end = v->nmemb,
+        .buffer = calloc(v->nmemb, v->size),
+    };
+    if (!params.buffer)
+        return false;
+
+    memmove(params.buffer, v->arr, v->nmemb * v->size);
+    merge_sort_helper(v, cmp, cookie, &params);
+
+    free(params.buffer);
+
+    return true;
+}
+
+static size_t pivot_median3_between(struct vector *v,
+        vector_cmp_f cmp, void *cookie, struct sort_params *params) {
+    size_t b = params->begin;
+    size_t e = params->end;
+    size_t mid = b + (e - b) / 2;
+
+    if (cmp(VEC_AT(v, b), VEC_AT(v, e - 1), cookie) == -1)
+    {
+        if (cmp(VEC_AT(v, e - 1), VEC_AT(v, mid), cookie) == -1)
+            return e - 1;
+        else if (cmp(VEC_AT(v, b), VEC_AT(v, mid), cookie) == -1)
+            return mid;
+        else
+            return b;
+    }
+    else
+    {
+        if (cmp(VEC_AT(v, b), VEC_AT(v, mid), cookie) == -1)
+            return b;
+        else if (cmp(VEC_AT(v, mid), VEC_AT(v, e - 1), cookie) == -1)
+            return e - 1;
+        else
+            return mid;
+    }
+}
+
+static size_t partition_between(struct vector *v, size_t pivot,
+        vector_cmp_f cmp, void *cookie, struct sort_params *params) {
+    size_t i = params->begin;
+    size_t j = params->end;
+    void *p_val = VEC_AT(v, pivot);
+    while (1) {
+        while (cmp(VEC_AT(v, i), p_val, cookie) < 0) {
+            ++i;
+        }
+        do
+        {
+            j--;
+        } while (cmp(VEC_AT(v, j), p_val, cookie) > 0);
+
+        if (i < j) {
+            swap_using(v, i, j, params->buffer);
+        }
+        else
+            return i + (params->begin == i);
+    }
+}
+
+#define SMALL_THRESHOLD 10
+static void intro_sort_helper(struct vector *v, size_t h_max,
+        vector_cmp_f cmp, void *cookie, struct sort_params *params) {
+    while (params->end - params->begin > SMALL_THRESHOLD) {
+        size_t b = params->begin;
+        size_t e = params->end;
+
+        if (h_max-- == 0) {
+            heap_sort_helper(v, cmp, cookie, params);
+            return;
+        }
+        else {
+            size_t p = pivot_median3_between(v, cmp, cookie, params);
+            size_t m = partition_between(v, p, cmp, cookie, params);
+            if (m <= (e - b) - m) {
+                params->end = m;
+                intro_sort_helper(v, h_max, cmp, cookie, params);
+                params->begin = m;
+                params->end = e;
+            }
+            else {
+                params->begin = m;
+                intro_sort_helper(v, h_max, cmp, cookie, params);
+                params->begin = b;
+                params->end = m;
+            }
+        }
+    }
+
+    insert_sort_helper(v, cmp, cookie, params);
+}
+
+static size_t log_2(size_t n) {
+    size_t l = 0;
+    while (n >>= 1)
+        ++l;
+    return l;
+}
+
+bool vector_sort(struct vector *v, vector_cmp_f cmp, void *cookie) {
+    if (!v || !v->nmemb)
+        return true;
+    struct sort_params params = {
+        .begin = 0,
+        .end = v->nmemb,
+        .buffer = calloc(v->nmemb, v->size),
+    };
+    if (!params.buffer)
+        return false;
+
+    size_t h_max = log_2(v->nmemb);
+    intro_sort_helper(v, h_max, cmp, cookie, &params);
+
+    free(params.buffer);
 
     return true;
 }
