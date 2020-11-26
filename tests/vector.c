@@ -650,3 +650,233 @@ Test(vector, pop_heap) {
 
     cr_assert_eq(v.nmemb, 0);
 }
+
+Test(vector, is_sorted_null) {
+    int count = 0;
+
+    cr_assert(vector_is_sorted(NULL, int_cmp, &count));
+
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, is_sorted_empty) {
+    int count = 0;
+
+    cr_assert(vector_is_sorted(&v, int_cmp, &count));
+
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, is_sorted_one) {
+    int *arr = v.arr;
+    arr[v.nmemb++] = 42;
+    int count = 0;
+
+    cr_assert(vector_is_sorted(&v, int_cmp, &count));
+
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, is_sorted_sorted) {
+    int count = 0;
+    fill_v();
+
+    cr_assert(vector_is_sorted(&v, int_cmp, &count));
+
+    cr_assert_eq(count, init_n - 1);
+}
+
+Test(vector, is_sorted_inverse_sorted) {
+    for (size_t i = 0; i < init_n; ++i) {
+        int *arr = v.arr;
+        arr[v.nmemb++] = init_n - i - 1;
+    }
+    int count = 0;
+
+    cr_assert_not(vector_is_sorted(&v, int_cmp, &count));
+
+    cr_assert_lt(count, init_n - 1);
+}
+
+Test(vector, insert_sort_null) {
+    int count = 0;
+    cr_assert(vector_insert_sort(NULL, int_cmp, &count));
+
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, insert_sort_empty) {
+    int count = 0;
+    cr_assert(vector_insert_sort(&v, int_cmp, &count));
+
+    cr_assert(vector_is_sorted(&v, int_cmp, &count));
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, insert_sort_one) {
+    int *arr = v.arr;
+    arr[v.nmemb++] = 42;
+    int count = 0;
+    cr_assert(vector_insert_sort(&v, int_cmp, &count));
+
+    cr_assert(vector_is_sorted(&v, int_cmp, &count));
+    cr_assert_eq(count, 0);
+}
+
+static void assert_sorted(void) {
+    int *varr = v.arr;
+    for (size_t i = 0; i < init_n; ++i) {
+        cr_assert_eq(varr[i], i);
+    }
+}
+
+Test(vector, insert_sort_sorted) {
+    fill_v();
+    int count = 0;
+    cr_assert(vector_insert_sort(&v, int_cmp, &count));
+
+    assert_sorted();
+}
+
+Test(vector, insert_sort_inverse_sorted) {
+    for (size_t i = 0; i < init_n; ++i) {
+        int *arr = v.arr;
+        arr[v.nmemb++] = init_n - i - 1;
+    }
+    int count = 0;
+    cr_assert(vector_insert_sort(&v, int_cmp, &count));
+
+    assert_sorted();
+}
+
+Test(vector, heap_sort_null) {
+    int count = 0;
+    cr_assert(vector_heap_sort(NULL, int_cmp, &count));
+
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, heap_sort_empty) {
+    int count = 0;
+    cr_assert(vector_heap_sort(&v, int_cmp, &count));
+
+    cr_assert(vector_is_sorted(&v, int_cmp, &count));
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, heap_sort_one) {
+    int *arr = v.arr;
+    arr[v.nmemb++] = 42;
+    int count = 0;
+    cr_assert(vector_heap_sort(&v, int_cmp, &count));
+
+    cr_assert(vector_is_sorted(&v, int_cmp, &count));
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, heap_sort_sorted) {
+    fill_v();
+    int count = 0;
+    cr_assert(vector_heap_sort(&v, int_cmp, &count));
+
+    assert_sorted();
+}
+
+Test(vector, heap_sort_inverse_sorted) {
+    for (size_t i = 0; i < init_n; ++i) {
+        int *arr = v.arr;
+        arr[v.nmemb++] = init_n - i - 1;
+    }
+    int count = 0;
+    cr_assert(vector_heap_sort(&v, int_cmp, &count));
+
+    assert_sorted();
+}
+
+Test(vector, merge_sort_null) {
+    int count = 0;
+    cr_assert(vector_merge_sort(NULL, int_cmp, &count));
+
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, merge_sort_empty) {
+    int count = 0;
+    cr_assert(vector_merge_sort(&v, int_cmp, &count));
+
+    cr_assert(vector_is_sorted(&v, int_cmp, &count));
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, merge_sort_one) {
+    int *arr = v.arr;
+    arr[v.nmemb++] = 42;
+    int count = 0;
+    cr_assert(vector_merge_sort(&v, int_cmp, &count));
+
+    cr_assert(vector_is_sorted(&v, int_cmp, &count));
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, merge_sort_sorted) {
+    fill_v();
+    int count = 0;
+    cr_assert(vector_merge_sort(&v, int_cmp, &count));
+
+    assert_sorted();
+}
+
+Test(vector, merge_sort_inverse_sorted) {
+    for (size_t i = 0; i < init_n; ++i) {
+        int *arr = v.arr;
+        arr[v.nmemb++] = init_n - i - 1;
+    }
+    int count = 0;
+    cr_assert(vector_merge_sort(&v, int_cmp, &count));
+
+    assert_sorted();
+}
+
+Test(vector, sort_null) {
+    int count = 0;
+    cr_assert(vector_sort(NULL, int_cmp, &count));
+
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, sort_empty) {
+    int count = 0;
+    cr_assert(vector_sort(&v, int_cmp, &count));
+
+    cr_assert(vector_is_sorted(&v, int_cmp, &count));
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, sort_one) {
+    int *arr = v.arr;
+    arr[v.nmemb++] = 42;
+    int count = 0;
+    cr_assert(vector_sort(&v, int_cmp, &count));
+
+    cr_assert(vector_is_sorted(&v, int_cmp, &count));
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, sort_sorted) {
+    fill_v();
+    int count = 0;
+    cr_assert(vector_sort(&v, int_cmp, &count));
+
+    assert_sorted();
+}
+
+Test(vector, sort_inverse_sorted) {
+    for (size_t i = 0; i < init_n; ++i) {
+        int *arr = v.arr;
+        arr[v.nmemb++] = init_n - i - 1;
+    }
+    int count = 0;
+    cr_assert(vector_sort(&v, int_cmp, &count));
+
+    assert_sorted();
+}
