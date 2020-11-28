@@ -569,3 +569,30 @@ bool vector_sort(struct vector *v, vector_cmp_f cmp, void *cookie) {
 
     return true;
 }
+
+bool vector_filter(struct vector *res,
+        struct vector *v, vector_filter_f filter, void *cookie) {
+    if (!v || !res)
+        return false;
+
+    for (size_t i = 0; i < v->nmemb; ++i) {
+        void *elem = VEC_AT(v, i);
+        if (!filter(elem, cookie))
+            continue;
+        if (!vector_push_back(res, elem) || !vector_pop_at(v, NULL, i))
+            return false; // Undefined state at this point...
+        --i; // We need to see the new element at the same index
+    }
+
+    return true;
+}
+
+void vector_map(struct vector *v, vector_map_f map, void *cookie) {
+    if (!v)
+        return;
+
+    for (size_t i = 0; i < v->nmemb; ++i) {
+        void *elem = VEC_AT(v, i);
+        map(elem, cookie);
+    }
+}

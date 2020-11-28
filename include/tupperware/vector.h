@@ -46,4 +46,11 @@ bool vector_heap_sort(struct vector *v, vector_cmp_f cmp, void *cookie);
 bool vector_merge_sort(struct vector *v, vector_cmp_f cmp, void *cookie);
 bool vector_sort(struct vector *v, vector_cmp_f cmp, void *cookie);
 
+typedef void (*vector_map_f)(void *v, void *cookie);
+typedef bool (*vector_filter_f)(void *v, void *cookie);
+
+bool vector_filter(struct vector *res,
+        struct vector *v, vector_filter_f filter, void *cookie);
+void vector_map(struct vector *v, vector_map_f map, void *cookie);
+
 #endif /* !TUPPERWARE_VECTOR_H */
