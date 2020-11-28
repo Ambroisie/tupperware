@@ -73,7 +73,8 @@ static void int_dtor(void *val, void *cookie) {
     int *n = val;
     int *count = cookie;
 
-    cr_assert_eq(*n, (*count)++);
+    if (count)
+        cr_assert_eq(*n, (*count)++);
 }
 
 Test(vector, clear_null) {
@@ -879,4 +880,88 @@ Test(vector, sort_inverse_sorted) {
     cr_assert(vector_sort(&v, int_cmp, &count));
 
     assert_sorted();
+}
+
+static bool int_even(void *v, void *cookie) {
+    int *count = cookie;
+    ++*count;
+
+    int *val = v;
+
+    return *val % 2 == 0;
+}
+
+Test(vector, filter_null) {
+    int count = 0;
+
+    cr_assert_not(vector_filter(NULL, NULL, int_even, &count));
+    cr_assert_eq(count, 0);
+
+    struct vector v;
+    cr_assert_not(vector_filter(&v, NULL, int_even, &count));
+    cr_assert_eq(count, 0);
+    cr_assert_not(vector_filter(NULL, &v, int_even, &count));
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, filter_empty) {
+    int count = 0;
+
+    cr_assert(vector_filter(&v, &v, int_even, &count));
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, filter) {
+    fill_v();
+    int count = 0;
+    struct vector res;
+    cr_assert(vector_with_cap(&res, v.size, v.nmemb));
+
+    cr_assert(vector_filter(&res, &v, int_even, &count));
+
+    cr_assert_eq(count, init_n);
+    cr_assert_eq(v.nmemb + res.nmemb, init_n);
+
+    int *varr  = v.arr;
+    int *rarr = res.arr;
+    for (size_t i = 0; i < init_n; ++i) {
+        if (i % 2)
+            cr_assert_eq(varr[i / 2], i);
+        else
+            cr_assert_eq(rarr[i / 2], i);
+    }
+
+    vector_clear(&res, NULL, NULL);
+}
+
+static void int_incr(void *v, void *cookie) {
+    int *count = cookie;
+    ++*count;
+
+    int *val = v;
+    ++*val;
+}
+
+Test(vector, map_null) {
+    int count = 0;
+    vector_map(NULL, int_incr, &count);
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, map_empty) {
+    int count = 0;
+    vector_map(&v, int_incr, &count);
+    cr_assert_eq(count, 0);
+}
+
+Test(vector, map) {
+    fill_v();
+    int count = 0;
+    vector_map(&v, int_incr, &count);
+    cr_assert_eq(count, init_n);
+
+    int *varr = v.arr;
+    for (size_t i = 0; i < v.nmemb; ++i) {
+        cr_assert_eq(varr[i], i + 1);
+    }
 }
