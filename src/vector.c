@@ -492,24 +492,18 @@ static size_t pivot_median3_between(struct vector *v,
 
 static size_t partition_between(struct vector *v, size_t pivot,
         vector_cmp_f cmp, void *cookie, struct sort_params *params) {
-    size_t i = params->begin;
-    size_t j = params->end;
-    void *p_val = VEC_AT(v, pivot);
-    while (1) {
-        while (cmp(VEC_AT(v, i), p_val, cookie) < 0) {
-            ++i;
-        }
-        do
-        {
-            j--;
-        } while (cmp(VEC_AT(v, j), p_val, cookie) > 0);
+    size_t l = params->begin;
+    size_t r = params->end;
+    swap_using(v, pivot, --r, params->buffer); // Put pivot at the end
+    void *p_val = VEC_AT(v, r);
 
-        if (i < j) {
-            swap_using(v, i, j, params->buffer);
-        }
-        else
-            return i + (params->begin == i);
+    for (size_t i = l; i < r; ++i) {
+        if (cmp(VEC_AT(v, i), p_val, cookie) < 0)
+            swap_using(v, i, l++, params->buffer);
     }
+
+    swap_using(v, l, r, params->buffer); // Put it back where it needs to be
+    return l;
 }
 
 #define SMALL_THRESHOLD 10
